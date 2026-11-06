@@ -1,0 +1,178 @@
+## etcd Snapshot Backup and restore
+The control-plane node is `k8s-master`. The etcd TLS assets are at `/etc/kubernetes/pki/etcd/`. Take a snapshot of the etcd database and save it to `/opt/backup/etcd-snapshot.db`.
+Restore the etcd snapshot at `/opt/backup/etcd-snapshot.db` to the directory `/var/lib/etcd-restore`. Then update the etcd static pod manifest to use the new data directory.
+
+
+## RBAC: Role + RoleBinding for a ServiceAccount
+In namespace `dev`, create a ServiceAccount named `ci-runner`. Create a Role named `pod-reader` that allows `get`, `list`, and `watch` on pods. Bind it to `ci-runner` via a RoleBinding named `ci-runner-binding`.
+
+### Cluster Upgrade with kubeadm
+The cluster is running Kubernetes v1.35. Upgrade the control-plane node to v1.36 using kubeadm, then drain the control-plane, upgrade kubelet and kubectl, and uncordon the node.
+### Deployment with Taint Toleration
+Node `node02` has the taint `env=prod:NoSchedule`. Create a Deployment named `prod-web` in namespace `production` running image `nginx:1.25` with 2 replicas. The pods must schedule on `node02`.
+
+
+### Rolling Update + Rollback
+Deployment `frontend` in namespace `default` is running `nginx:1.24`. Update it to `nginx:1.25-broken` (an image that will fail). After confirming the rollout is degraded, roll it back to the previous version.
+
+
+### ConfigMap Injected as Environment Variable
+Create a ConfigMap named `app-config` in namespace `default` with key `APP_ENV=production`. Create a Pod named `app-pod` using image `busybox:1.36` that runs `sleep 3600` and exposes `APP_ENV` as an environment variable sourced from the ConfigMap.
+
+
+### Expose a Deployment via NodePort
+Deployment `web` in namespace `default` exposes port 80. Create a NodePort Service named `web-svc` that maps port 80 on the Service to port 80 on the pods and exposes it as NodePort 30080.
+
+### NetworkPolicy Default Deny + Targeted Allow
+
+In namespace `restricted`, create a NetworkPolicy named `default-deny-ingress` that blocks all ingress traffic to every pod. Then create a second NetworkPolicy named `allow-frontend` that allows ingress to pods labelled `app=backend` only from pods labelled `app=frontend` on port 8080.
+
+### PersistentVolume + PersistentVolumeClaim
+Create a PersistentVolume named `pv-logs` with 500Mi capacity, `accessModes: ReadWriteOnce`, `hostPath: /mnt/logs`, and `storageClassName: manual`. Then create a PersistentVolumeClaim named `pvc-logs` in namespace `default` requesting 200Mi with the same storage class and access mode.
+
+### Mounting a PVC
+Create a Pod named `logger` in namespace `default` using image `busybox:1.36` that runs `sleep 3600`. Mount the PVC `pvc-logs` at `/var/log/app` inside the container.
+###  Ingress Rule for Two Paths
+Services `api-svc` (port 8080) and `web-svc` (port 80) exist in namespace `default`. Create an Ingress named `app-ingress` that routes `/api` to `api-svc:8080` and `/` to `web-svc:80` using `pathType: Prefix`.
+
+
+**InitContainer**
+**Create a Pod named `init-web` with these requirements:**
+
+1. Main container:
+    - Name: `nginx`
+    - Image: `nginx`
+2. Init Container:
+    - Name: `init-check`
+    - Image: `busybox`
+    - Command: `sh -c "sleep 10; echo initialization-complete"`
+3. The Init Container must finish before Nginx starts.
+Your task: Write the complete Pod YAML.
+
+
+**Sidecar**
+Create a Pod named `webapp` with the following requirements:
+Main container
+- Name: `main-app`
+- Image: `nginx`
+- Mount shared volume at `/var/log/app`
+    
+Sidecar container
+
+- Name: `sidecar`
+- Image: `busybox`
+- Command: `sh -c "tail -f /var/log/app/access.log"`
+- Mount the same shared volume at `/var/log/app`
+
+Volume
+- Name: `logs`
+- Type: `emptyDir`
+
+
+## Multi-Container Pod (Sidecar)
+You are given an existing Deployment named `webapp` in namespace `default`. Modify it to include a sidecar container named `sidecar` that reads the application's log file from a shared volume.
+
+Requirements
+
+1. Keep the existing application container.
+2. Add a shared volume named `logs`, mounted at `/var/log/app` in both containers.
+3. Configure the application container to write logs to `/var/log/app/app.log`.
+4. Configure `sidecar` to run `tail -f /var/log/app/app.log`.
+5. Apply the changes and verify the logs from the `sidecar` container.
+6. Ignore errors caused by `tail` starting before the log file exists, provided the Pod is healthy and the sidecar eventually reads the log file.
+
+Constraints: Use imperative commands where practical. Edit the existing Deployment; do not create a separate Pod.
+
+
+## Task: PersistentVolumeClaim
+
+You are given an existing PersistentVolume and a MariaDB Deployment manifest. Configure persistent storage and deploy the application successfully.
+
+Given resources
+
+- PersistentVolume: `mariadb-pv`
+- StorageClass: `manual`
+- PVC name: `mariadb-pvc`
+- Namespace: `default`
+- Requested storage: `1Gi`
+- Access mode: `ReadWriteOnce`
+- Deployment name: `mariadb`
+
+Requirements
+1. Inspect the existing PV and identify its capacity, access modes, and StorageClass.
+2. Create a PVC named `mariadb-pvc` that matches the PV and becomes `Bound`.
+3. Update the provided Deployment YAML to use this PVC.
+4. Apply the Deployment and verify that the MariaDB Pod is running.
+5. Verify that the Pod mounts the persistent volume at `/var/lib/mysql`.
+
+## Migrate Ingress to Gateway API
+
+We'll start by creating an existing Ingress resource that you'll later migrate to a `Gateway` and `HTTPRoute`.
+
+Requirements
+
+Create an Ingress named `web-ingress` in namespace `default` with these settings:
+
+- Hostname: `app.example.com`
+- Ingress class: `nginx`
+- TLS secret: `app-tls-secret`
+- Backend Service: `web-service`
+- Backend port: `80`
+- Path: `/`
+- Path type: `Prefix`
+    
+The Service and TLS Secret are assumed to exist already.
+
+## Create a Certificate Signing Request (CSR)
+
+### Scenario
+
+A developer named `jane` needs access to your Kubernetes cluster. Create a Kubernetes CSR with these requirements:
+
+- Username: `jane`
+- Group: `developers`
+- Request name: `jane-csr`
+- Key algorithm: RSA, 2048 bits
+- Signer: `kubernetes.io/kube-apiserver-client`
+- Expiration: 365 days
+
+## CoreDNS Configuration
+
+**Scenario**: 
+You are given a Kubernetes cluster where DNS resolution for external domains works, but Kubernetes Service names fail to resolve. CoreDNS Pods are `Running`.
+
+You inspect the CoreDNS ConfigMap and find that the `kubernetes` plugin configuration is missing from the `Corefile`.
+
+**Task**: Identify the command to edit the CoreDNS ConfigMap and explain what configuration needs to be restored.
+
+## Failed Job troubleshooting
+
+Difficulty: Intermediate
+
+You need to create a Job named `failure-job` with these requirements:
+
+- Image: `busybox:1.36`
+- Command: `sh -c "echo Starting; exit 1"`
+- Run only 1 completion
+- Retry failed Pods up to 3 times
+
+**Your task:** Create the Job and determine how to verify that it failed after exhausting its retries.
+
+
+
+## CKA Practice Question: Kubernetes Job
+
+Difficulty: Beginner → Intermediate  
+Topic: Jobs, completions, parallelism, and verification
+
+### Scenario
+
+You are managing a Kubernetes cluster. Your task is to create a Kubernetes Job named `batch-job` that runs the container image `busybox:1.36`.
+
+The Job must meet these requirements:
+
+1. Execute the command `sh -c "echo CKA Job completed; sleep 5"`.
+2. Successfully complete 3 Pods.
+3. Run a maximum of 2 Pods in parallel.
+4. Retry failed Pods no more than 2 times.
+5. Verify that the Job completes successfully.
