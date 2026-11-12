@@ -1,4 +1,4 @@
-# CKA Notes
+# CKA Study Notes
 
 ## 1. Upgrading kubeadm version
 
@@ -12,7 +12,7 @@ nano /etc/apt/sources.list.d/kubernetes.list
 
 ## 2. Backup and restore etcd
 
-### Step 1: Take a snapshot
+### Take a snapshot
 
 ```bash
 kubectl exec -it etcd-control-node -n kube-system -- etcdctl \
@@ -29,7 +29,7 @@ To see the etcd container config:
 sudo cat /etc/kubernetes/manifests/etcd.yaml
 ```
 
-### Step 2: Make sure the target directory exists
+Make sure the target directory exists first:
 
 ```bash
 sudo mkdir -p /opt/backups
@@ -41,21 +41,21 @@ sudo mkdir -p /opt/backups
 sudo ETCDCTL_API=3 etcdctl snapshot status /opt/backups/etcd-snapshot.db --write-out=table
 ```
 
-Or use:
+### Restore
 
 ```bash
 kubectl exec -it etcd-control-node -n kube-system -- etcdutl --data-dir=/var/lib/etcd-restore snapshot restore snapshot.db
 ```
 
-### Step 4: Point etcd at the restored data
+Then edit the manifest:
 
 ```bash
 sudo vim /etc/kubernetes/manifests/etcd.yaml
 ```
 
-Edit **3 locations**: `etcd` → `etcd-restore`
+Edit **3 locations**: `etcd` → `etcd-restore`.
 
-Wait 40–50s.
+Wait 40–50s for the static pod to restart.
 
 ---
 
@@ -70,6 +70,10 @@ Default location:
 ---
 
 ## 4. Scheduling
+
+- **Taint**: prevents a pod from being scheduled on a node. To overcome: add a **toleration**.
+- **Node selector**: choose a specific node.
+- **Node affinity**: force a pod to run on certain nodes.
 
 ### a. Node Selector
 
@@ -90,14 +94,14 @@ spec:
   nodeSelector:
     disktype: ssd
   containers:
-    - name: nginx
-      image: nginx
+  - name: nginx
+    image: nginx
 ```
 
 ### b. Node Affinity
 
-- **requiredDuringSchedulingIgnoredDuringExecution**: Must match
-- **preferredDuringSchedulingIgnoredDuringExecution**: Prefer matching, but not mandatory
+- `requiredDuringSchedulingIgnoredDuringExecution`: **Must** match
+- `preferredDuringSchedulingIgnoredDuringExecution`: **Prefer** matching, but not mandatory
 
 ```yaml
 apiVersion: v1
@@ -109,14 +113,14 @@ spec:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
-          - matchExpressions:
-              - key: disktype
-                operator: In
-                values:
-                  - ssd
+        - matchExpressions:
+          - key: disktype
+            operator: In
+            values:
+            - ssd
   containers:
-    - name: nginx
-      image: nginx
+  - name: nginx
+    image: nginx
 ```
 
 Common operators: `In`, `NotIn`, `Exists`, `DoesNotExist`, `Gt`, `Lt`
@@ -130,10 +134,22 @@ kubectl label pod nginx environment=production
 ```yaml
 selector:
   matchExpressions:
-    - key: environment
-      operator: In
-      values:
-        - production
+  - key: environment
+    operator: In
+    values:
+    - production
+```
+
+### d. Taint
+
+```yaml
+nodeSelector:
+  env: prod
+tolerations:
+- key: "env"
+  operator: "Equal"
+  value: "prod"
+  effect: "NoSchedule"
 ```
 
 ---
@@ -174,16 +190,18 @@ nginx -t
 Create token:
 
 ```bash
-kubectl create token <SA_NAME> -n <NAMESPACE> --duration=24h
+kubectl create token <sa-name> -n <namespace> --duration=24h
 ```
 
-**Use directly:**
+**How to use**
+
+Use directly:
 
 ```bash
 kubectl --token=<YOUR_TOKEN> get pods -n default
 ```
 
-**Create a separate kubeconfig context:**
+Or create a separate kubeconfig context:
 
 ```bash
 TOKEN=$(kubectl create token myuser -n default)
@@ -237,7 +255,7 @@ spec:
   signerName: kubernetes.io/kube-apiserver-client
   expirationSeconds: 86400
   usages:
-    - client auth
+  - client auth
 ```
 
 ```bash
@@ -286,9 +304,9 @@ kubectl create rolebinding admin-binding --role=admin --serviceaccount=monitorin
 
 ---
 
-## 7. DNS / CoreDNS
+## 7. CoreDNS, Deployments, Kustomize
 
-Corefile:
+### CoreDNS (Corefile)
 
 ```
 .:53 {
@@ -323,7 +341,7 @@ Corefile:
 | `fallthrough` | Passes unmatched reverse DNS queries to the next plugin |
 | `ttl 30` | Sets DNS record TTL to 30 seconds |
 
-Check DNS ConfigMap:
+Check the DNS ConfigMap:
 
 ```bash
 kubectl get configmap coredns -n kube-system -o yaml
@@ -343,9 +361,7 @@ nslookup kubernetes.default.svc.cluster.local
 nslookup google.com
 ```
 
----
-
-## Deployments
+### Deployments
 
 ```bash
 kubectl create deployment frontend --image=nginx:1.24
@@ -359,9 +375,7 @@ kubectl create job test-job --image=busybox -- echo hello
 kubectl create cronjob test --image=busybox --schedule="*/5 * * * *" -- echo hello
 ```
 
----
-
-## Kustomize
+### Kustomize
 
 ```
 ~/cka/kustomize/
@@ -378,7 +392,7 @@ kubectl create cronjob test --image=busybox --schedule="*/5 * * * *" -- echo hel
 
 ## 8. PersistentVolume
 
-Docs: <https://kubernetes.io/docs/tutorials/configuration/configure-persistent-volume-storage/>
+Reference: <https://kubernetes.io/docs/tutorials/configuration/configure-persistent-volume-storage/>
 
 ```yaml
 accessModes:
@@ -389,9 +403,7 @@ accessModes:
 
 ## 9. PersistentVolumeClaim
 
-**Bound vs Pending**
-
-Binding mode:
+**Bound vs Pending** depends on the binding mode:
 
 - `Immediate`: Provision/bind PV immediately after PVC creation
 - `WaitForFirstConsumer`: Wait until a Pod consumes the PVC
@@ -444,12 +456,10 @@ resources:
     cpu: 500m
 ```
 
-**HPA Scaling Formula**
-
-Know this concept for troubleshooting:
+**HPA scaling formula** (know this concept for troubleshooting):
 
 ```
-DesiredReplicas = ceil[CurrentReplicas x (CurrentMetric / TargetMetric)]
+DesiredReplicas = ceil( CurrentReplicas × CurrentMetric / TargetMetric )
 ```
 
 Example:
@@ -458,11 +468,7 @@ Example:
 - Current CPU utilization = 90%
 - Target CPU utilization = 60%
 
-```
-DesiredReplicas = 3 x 90/60 = 4.5
-```
-
-Rounded up: **5 desired replicas**
+`DesiredReplicas = 3 × 90 / 60 = 4.5` → rounded up: **5 desired replicas**
 
 Actual scaling can be affected by stabilization windows, scaling policies, and configured min/max replicas.
 
@@ -478,32 +484,32 @@ Actual scaling can be affected by stabilization windows, scaling policies, and c
 
 ```yaml
 envFrom:
-  - secretRef:
-      name: db-credentials
+- secretRef:
+    name: db-credentials
 ```
 
 Or, if you need specific env var names mapped from specific keys:
 
 ```yaml
 env:
-  - name: DB_USERNAME
-    valueFrom:
-      secretKeyRef:
-        name: db-credentials
-        key: username
-  - name: DB_PASSWORD
-    valueFrom:
-      secretKeyRef:
-        name: db-credentials
-        key: password
+- name: DB_USERNAME
+  valueFrom:
+    secretKeyRef:
+      name: db-credentials
+      key: username
+- name: DB_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: db-credentials
+      key: password
 ```
 
 ---
 
 ## 12. Liveness and Readiness
 
-- Nginx listens on port 80 inside the container → port 80.
-- Your application listens on port 8080 → port 8080.
+- Nginx listens on port 80 inside the container → port `80`.
+- Your application listens on port 8080 → port `8080`.
 
 ```yaml
 readinessProbe:
@@ -525,9 +531,9 @@ livenessProbe:
 |---|---|
 | `containerPort` | Application listening port |
 | Probe `httpGet.port` | Application listening port |
-| Service `port` | Port exposed by Service |
+| Service `port` | Port exposed by the Service |
 | Service `targetPort` | Destination application port |
-| NodePort | External node access port |
+| `nodePort` | External node access port |
 
 Remember:
 
@@ -535,7 +541,23 @@ Remember:
 - Service → service `port` maps to `targetPort`.
 - NodePort → external access.
 
-![[Pasted image 20261104204105.png]]
+NodePort example:
+
+```yaml
+ports:
+- nodePort: 30080
+  port: 80
+  protocol: TCP
+  targetPort: 80
+selector:
+  app: web
+sessionAffinity: None
+type: NodePort
+```
+
+```bash
+curl http://<node-ip>:30080
+```
 
 ---
 
@@ -545,22 +567,21 @@ Remember:
 
 CKA exam scenarios:
 
-**Wait for a Service:** Ensure the application starts only after another service becomes available.
-
-To verify: `kubectl describe pod …`, look for `pulling image … x … pulling image … y`.
+- **Wait for a Service**: ensure the application starts only after another service becomes available.
+- To verify: `kubectl describe pod …` and look for "pulling image … x … pulling image … y".
 
 ```yaml
 initContainers:
-  - name: wait-for-service
-    image: busybox:1.36
-    command:
-      - sh
-      - -c
-      - |
-        until nslookup mysql-service; do
-          echo "Waiting for MySQL..."
-          sleep 2
-        done
+- name: wait-for-service
+  image: busybox:1.36
+  command:
+  - sh
+  - -c
+  - |
+    until nslookup mysql-service; do
+      echo "Waiting for MySQL..."
+      sleep 2
+    done
 ```
 
 **Create a file before the application starts:**
@@ -568,29 +589,33 @@ initContainers:
 ```yaml
 spec:
   initContainers:
-    - name: init
-      image: busybox
-      command: ["sh", "-c", "echo ready > /work/status"]
-      volumeMounts:
-        - name: workdir
-          mountPath: /work
-  containers:
-    - name: app
-      image: busybox
-      command: ["sh", "-c", "cat /work/status && sleep 3600"]
-      volumeMounts:
-        - name: workdir
-          mountPath: /work
-  volumes:
+  - name: init
+    image: busybox
+    command: ["sh", "-c", "echo ready > /work/status"]
+    volumeMounts:
     - name: workdir
-      emptyDir: {}
+      mountPath: /work
+  containers:
+  - name: app
+    image: busybox
+    command: ["sh", "-c", "cat /work/status && sleep 3600"]
+    volumeMounts:
+    - name: workdir
+      mountPath: /work
+  volumes:
+  - name: workdir
+    emptyDir: {}
 ```
 
 ### b. Sidecar
 
-Kubernetes supports native sidecars using `initContainers` with `restartPolicy: Always`.
+Kubernetes supports native sidecars using `initContainers` with:
 
-Classic two-container example:
+```yaml
+restartPolicy: Always
+```
+
+Example (shared log volume):
 
 ```yaml
 apiVersion: v1
@@ -599,26 +624,28 @@ metadata:
   name: sidecar-demo
 spec:
   containers:
-    - name: main-app
-      image: busybox
-      command: ["sh", "-c", "while true; do echo 'Application log' >> /var/log/app.log; sleep 5; done"]
-      volumeMounts:
-        - name: shared-logs
-          mountPath: /var/log
-    - name: sidecar
-      image: busybox
-      command: ["sh", "-c", "tail -f /var/log/app.log"]
-      volumeMounts:
-        - name: shared-logs
-          mountPath: /var/log
-  volumes:
+  - name: main-app
+    image: busybox
+    command: ["sh", "-c", "while true; do echo 'Application log' >> /var/log/app.log; sleep 5; done"]
+    volumeMounts:
     - name: shared-logs
-      emptyDir: {}
+      mountPath: /var/log
+  - name: sidecar
+    image: busybox
+    command: ["sh", "-c", "tail -f /var/log/app.log"]
+    volumeMounts:
+    - name: shared-logs
+      mountPath: /var/log
+  volumes:
+  - name: shared-logs
+    emptyDir: {}
 ```
 
 ---
 
 ## 14. Linux commands
+
+### Keep containers running / loops
 
 | Command | Purpose |
 |---|---|
@@ -628,7 +655,7 @@ spec:
 | `while true; do sleep 3600; done` | Infinite loop |
 | `sh -c 'while true; do echo hello; sleep 5; done'` | Repeatedly print output |
 
-**BusyBox:**
+### BusyBox
 
 ```bash
 nslookup kubernetes.default
@@ -638,7 +665,7 @@ wget -qO- http://my-service:8080
 ping 10.0.0.10
 ```
 
-**Curl image:**
+### Curl image
 
 ```bash
 curl http://my-service
@@ -647,7 +674,7 @@ curl -I http://my-service
 curl -k https://my-service
 ```
 
-**Ubuntu/Alpine (if utilities are installed):**
+### Ubuntu/Alpine (if utilities are installed)
 
 ```bash
 ip addr
@@ -657,10 +684,11 @@ cat /etc/hosts
 printenv
 ```
 
-**Debugging and cluster ops:**
+### Debug pod, CSR, services, logs
 
 ```bash
 kubectl run debug --image=busybox -it --rm -- sh
+
 kubectl get csr
 kubectl certificate approve my-csr
 
@@ -681,13 +709,165 @@ ss -tulpn
 ip route
 ```
 
-**Useful tools:** `jq`, `dnsutils`, `net-tools`, `tmux`
+### Useful tools
+
+- `jq`
+- `dnsutils`
+- `net-tools`
+- `tmux`
+
+---
+
+## TLS Secret
+
+Reference: <https://kubernetes.io/docs/concepts/configuration/secret/>
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: testsecret-tls
+  namespace: default
+data:
+  tls.crt: base64 encoded cert
+  tls.key: base64 encoded key
+type: kubernetes.io/tls
+```
+
+If `tls.crt` and `tls.key` already exist:
+
+```bash
+kubectl create secret tls app-tls-secret \
+  --cert=tls.crt \
+  --key=tls.key
+```
+
+Create manually:
+
+```bash
+openssl genrsa -out tls.key 2048
+
+openssl req -x509 -new -nodes \
+  -key tls.key \
+  -sha256 \
+  -days 365 \
+  -out tls.crt \
+  -subj "/CN=app.example.com/O=app.example.com" \
+  -addext "subjectAltName=DNS:app.example.com"
+
+base64 -w 0 tls.crt
+base64 -w 0 tls.key
+```
+
+PowerShell:
+
+```powershell
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("tls.crt"))
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("tls.key"))
+```
+
+---
+
+## Ingress
+
+Structure:
+
+```
+rules
+└── host
+    └── http
+        └── paths
+            └── path
+                └── backend
+                    └── service
+                        ├── name
+                        └── port
+```
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web-ingress
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - app.example.com
+    secretName: app-tls-secret
+  rules:
+  - host: app.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: web-service
+            port:
+              number: 80
+```
+
+---
+
+## Network Policy
+
+Template:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: <policy-name>
+  namespace: <namespace-name>
+spec:
+  podSelector:
+    matchLabels:
+      <key>: <value>
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from: [...]
+    ports: [...]
+  egress:
+  - to: [...]
+    ports: [...]
+```
+
+### Critical parameters of a NetworkPolicy
+
+**`podSelector`**
+
+- `{}` (empty): selects all pods in the namespace.
+- `matchLabels`: selects specific pods matching the given labels.
+- Omitted: selects no pods.
+
+**`policyTypes`**
+
+- Specifies whether the policy applies to Ingress, Egress, or both.
+- **Critical rule:** must be explicitly declared alongside empty rules (`ingress: []` or `egress: []`) to create default-deny behavior.
+
+**`ingress` (incoming traffic)**
+
+- `from`: defines allowed sources using:
+  - `podSelector`: pods within the same namespace.
+  - `namespaceSelector`: all pods in namespaces matching specific labels.
+  - `ipBlock`: specific CIDR IP ranges (with optional `except`).
+- `ports`: restricts traffic by protocol (TCP, UDP, SCTP) and port number or name.
+- Behavior: empty `ingress: []` blocks all incoming traffic.
+
+**`egress` (outgoing traffic)**
+
+- `to`: defines allowed destinations using the same selectors as ingress (`podSelector`, `namespaceSelector`, `ipBlock`).
+- `ports`: restricts outgoing traffic to specific protocols and ports.
+- Behavior: empty `egress: []` blocks all outgoing traffic.
 
 ---
 
 ## 15. Miscellaneous
 
-**YAML list style 1 – Indented list (recommended for readability)**
+**Style 1 – Indented list (recommended for readability)**
 
 ```yaml
 volumes:
