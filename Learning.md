@@ -865,6 +865,131 @@ spec:
 
 ---
 
+# CRD, CNI, CSI, CRI — CKA Notes
+
+## CRD — CustomResourceDefinition
+- Extends Kubernetes API with custom resource types.
+- CRD = Defines resource type; CR = Instance.
+- Usually paired with a controller/operator.
+
+```bash
+kubectl apply -f database-crd.yaml
+kubectl get crd
+kubectl api-resources
+kubectl get databases
+```
+
+**CRD example:**
+```yaml
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: databases.example.com
+spec:
+  group: example.com
+  scope: Namespaced
+  names:
+    plural: databases
+    singular: database
+    kind: Database
+  versions:
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              engine:
+                type: string
+```
+
+## CNI — Container Network Interface
+- Provides Pod networking and IP addresses.
+- Examples: Calico, Flannel, Cilium.
+
+```bash
+ls /etc/cni/net.d/     # Configuration
+ls /opt/cni/bin/      # Plugin binaries
+```
+
+**Troubleshooting:** Pod network failure, `Failed to create pod sandbox`, `CNI plugin not initialized`.
+
+## CSI — Container Storage Interface
+- Integrates Kubernetes with storage providers.
+- Examples: Azure Disk, Azure Files, AWS EBS.
+- Controller: Provision/attach/detach.
+- Node: Mount/unmount.
+
+```bash
+kubectl get pv,pvc
+kubectl get sc
+kubectl get csidrivers
+kubectl describe pvc <pvc-name>
+```
+
+**Troubleshooting:** PVC Pending, volume provisioning or mounting failure.
+
+## CRI — Container Runtime Interface
+- Allows kubelet to communicate with container runtime.
+- Examples: containerd, CRI-O.
+
+```bash
+crictl info
+crictl ps -a
+crictl pods
+crictl images
+crictl logs <container-id>
+systemctl status containerd
+```
+
+Basic commands
+# Explain a resource
+kubectl explain pod
+
+# Explain specific fields
+kubectl explain pod.spec
+kubectl explain pod.spec.containers
+
+# Go deeper into nested fields
+kubectl explain pod.spec.containers.resources
+
+# Show available fields recursively
+kubectl explain pod --recursive
+
+# Explain Deployment
+kubectl explain deployment.spec
+
+# Explain Service
+kubectl explain service.spec
+
+
+Practical example: Pod securityContext
+kubectl explain pod.spec.securityContext
+kubectl explain pod.spec.containers.securityContext
+
+
+Find fields such as runAsUser, runAsGroup, privileged, and readOnlyRootFilesystem.
+Practical example: Probes
+kubectl explain pod.spec.containers.livenessProbe
+kubectl explain pod.spec.containers.readinessProbe
+kubectl explain pod.spec.containers.startupProbe
+
+
+Useful options
+# Show all nested fields
+kubectl explain pod --recursive
+
+# Specify API version
+kubectl explain deployment --api-version=apps/v1
+
+
+CKA exam tip: When unsure about YAML syntax, use:
+kubectl explain <resource>.<field> --recursive
+
 ## 15. Miscellaneous
 
 **Style 1 – Indented list (recommended for readability)**
