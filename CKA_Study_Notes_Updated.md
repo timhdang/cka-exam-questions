@@ -396,6 +396,34 @@ kubectl create cronjob test --image=busybox --schedule="*/5 * * * *" -- echo hel
         └── kustomization.yaml
 ```
 
+Create kustomization.yaml
+```bash
+cat <<'EOF' > kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+namePrefix: prod-
+
+replicas:
+  - name: app
+    count: 3
+
+images:
+  - name: nginx
+    newTag: "1.25"
+
+commonLabels:
+  env: prod
+EOF
+```
+Apply the overlay
+```bash
+kubectl apply -k ~/kustomize/overlays/prod
+```
+
 ---
 
 ## 8. PersistentVolume
