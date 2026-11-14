@@ -1012,6 +1012,26 @@ All of the volume entries need the `-` dash.
 
 
 ---
+## METRICS-SERVER
+Installation
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+Disable TLS verifications
+```bash
+kubectl edit deployment metrics-server -n kube-system
+```
+add to args:
+```bash
+  - --kubelet-insecure-tls
+``` 
+kubectl rollout restart deployment/metrics-server -n kube-system
+
+Get top pods by CPU, by Memory
+
+```bash
+kubectl top pods --sort-by=cpu
+kubectl top pods --sort-by=memory
+```
 
 # 16. Missing CKA Topics — High-Priority Additions
 
