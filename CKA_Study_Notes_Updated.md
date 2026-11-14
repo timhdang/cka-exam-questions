@@ -1062,11 +1062,12 @@ add to args:
 ``` 
 kubectl rollout restart deployment/metrics-server -n kube-system
 
-Get top pods by CPU, by Memory
+Get top pods by CPU, by Memory, by Alphabetically
 
 ```bash
 kubectl top pods --sort-by=cpu
 kubectl top pods --sort-by=memory
+kubectl top pods --sort-by=.metadata.name
 ```
 
 # 16. Missing CKA Topics — High-Priority Additions
@@ -1275,15 +1276,42 @@ kubectl describe pv <pv>
 
 ## Troubleshooting — highest-weight exam domain
 
-## Tricks
+## KUBECTL Tricks
 Get top 1 in a list
 ```bash
 kubectl get pods -o jsonpath='{.items[0].metadata.name}'
 ```
-or using custom-colums
+or using custom-colums (or tail for last)
 ```bash
-kubectl get pods --no-headers | head -n 1
+kubectl get pods --no-headers | head -n 1 
 ```
+Extract specific columns with awk
+$1 = first column, $2 = second column.
+kubectl get pods --no-headers | awk '{print $1}'
+
+Count resources
+```bash
+kubectl get pods --no-headers | wc -l
+```
+
+LOGS
+```bash
+# Get logs from first pod
+kubectl logs $(kubectl get pods --no-headers | head -n 1 | awk '{print $1}')
+
+# Follow logs
+kubectl logs -f POD_NAME
+
+# Previous container logs
+kubectl logs POD_NAME --previous
+
+# Get container names in first pod
+kubectl get pod POD_NAME -o jsonpath='{.spec.containers[*].name}'
+
+# Get images in all containers
+kubectl get pod POD_NAME -o jsonpath='{.spec.containers[*].image}'
+```
+
 
 ### Fast diagnostic sequence
 
