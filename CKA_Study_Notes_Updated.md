@@ -10,6 +10,14 @@ nano /etc/apt/sources.list.d/kubernetes.list
 
 ---
 
+
+## Context
+
+kubectl config set-context CONTEXT_NAME \
+  --cluster=CLUSTER_NAME \
+  --user=USER_NAME \
+  --namespace=NAMESPACE
+
 ## 2. Backup and restore etcd
 
 ### Take a snapshot
