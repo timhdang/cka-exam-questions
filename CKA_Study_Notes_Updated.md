@@ -1275,6 +1275,16 @@ kubectl describe pv <pv>
 
 ## Troubleshooting — highest-weight exam domain
 
+## Tricks
+Get top 1 in a list
+```bash
+kubectl get pods -o jsonpath='{.items[0].metadata.name}'
+```
+or using custom-colums
+```bash
+kubectl get pods --no-headers | head -n 1
+```
+
 ### Fast diagnostic sequence
 
 ```bash
