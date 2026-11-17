@@ -273,10 +273,11 @@ helm install cert-manager jetstack/cert-manager --namespace cert-manager --creat
 ```
 
 1. List all CRDs in the cluster.
-2. Use `kubectl explain backups.spec` to read its schema.
-3. Create a `Backup` custom resource named `nightly` in `default` with fields that satisfy the schema.
-4. List Backups and describe `nightly`.
-5. Write the CRD's API group and kind to `/opt/answers/crd.txt`.
+2. Use `kubectl explain` to read its schema:
+3. Create a Certificate custom resource named my-app-tls in default with fields that satisfy the schema:
+Create a manifest file named certificate.yaml
+4. List Certificates and describe my-app-tls:
+5. Write the CRD's API group and kind to /opt/answers/crd.txt:
 
 **Completion criteria**
 - `kubectl get backups` lists `nightly`.
