@@ -86,6 +86,12 @@ Default location:
 
 ---
 
+## ADMIN.CONF
+
+mkdir -p ~/.kube
+sudo cp /etc/kubernetes/admin.conf ~/.kube/config
+sudo chown $(id -u):$(id -g) ~/.kube/config
+
 ## 4. Scheduling
 
 - **Taint**: prevents a pod from being scheduled on a node. To overcome: add a **toleration**.
