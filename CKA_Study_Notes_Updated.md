@@ -18,6 +18,15 @@ kubectl config set-context CONTEXT_NAME \
   --user=USER_NAME \
   --namespace=NAMESPACE
 
+
+
+## Kubelet
+Get kubelet logs
+```bash
+journalctl -u kubelet -f
+```
+
+
 ## 2. Backup and restore etcd
 
 ### Take a snapshot
@@ -678,6 +687,22 @@ spec:
 ```
 
 ---
+
+## KUBECLT LOGS
+kubectl logs -l app=payments <options>
+--all-pods
+--all-containers
+-c,--container string
+-f,--follow
+--ignore-errors
+--insecure-skip-tls-verify-backend
+--limit-bytes int
+--prefix
+-p, --previous
+-l, --selector string
+--since duration
+--tail int     Default: -1
+
 
 ## 14. Linux commands
 
