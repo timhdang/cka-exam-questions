@@ -265,7 +265,12 @@ A fresh kubeadm cluster has nodes in `NotReady` and CoreDNS Pods in `Pending`.
 
 ## T18. CustomResourceDefinitions
 
-A CRD `backups.stable.example.com` already exists.
+A CRD cert-manager already exists.
+```bash
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
+helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --set installCRDs=true
+```
 
 1. List all CRDs in the cluster.
 2. Use `kubectl explain backups.spec` to read its schema.
