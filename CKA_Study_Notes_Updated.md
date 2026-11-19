@@ -1237,6 +1237,27 @@ kubectl run dns-test --image=busybox:1.36 -it --rm --restart=Never -- sh
 nslookup web
 nslookup web.production.svc.cluster.local
 ```
+ERROR:
+No svc in namespace production
+```bash
+/ # nslookup api.backend.svc.cluster.local
+Server:         10.96.0.10
+Address:        10.96.0.10:53
+
+** server can't find api.backend.svc.cluster.local: NXDOMAIN
+```
+
+NORMAL
+```bash
+/ # nslookup api.backend.svc.cluster.local
+Server:         10.96.0.10
+Address:        10.96.0.10:53
+
+
+Name:   api.backend.svc.cluster.local
+Address: 10.96.235.141
+```
+
 
 ### Gateway API
 
