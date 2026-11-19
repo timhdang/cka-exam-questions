@@ -1258,6 +1258,16 @@ Name:   api.backend.svc.cluster.local
 Address: 10.96.235.141
 ```
 
+TEST DNS + HTTP
+```
+wget -q0- http://api.backend
+```
+## Result	Meaning
+HTML or application response	DNS and HTTP connectivity work
+bad address	DNS resolution failed
+Connection refused	Destination reachable, but connection rejected
+Connection timed out	Possible network, routing, or endpoint issue
+
 
 ### Gateway API
 
