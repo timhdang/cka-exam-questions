@@ -1268,6 +1268,16 @@ bad address	DNS resolution failed
 Connection refused	Destination reachable, but connection rejected
 Connection timed out	Possible network, routing, or endpoint issue
 
+## Service ports
+yaml
+spec:
+  selector:
+    app: web          # must match pod labels
+  ports:
+  - port: 80          # Service port (what clients call)
+    targetPort: 8080  # container port (where the app listens)
+
+wget http://web:80 → pod :8080
 
 ### Gateway API
 
