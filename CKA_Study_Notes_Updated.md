@@ -86,6 +86,20 @@ Default location:
 
 ---
 
+PodDisruptionBudget (BDB)
+```yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: db-pdb
+  namespace: default
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: db
+```
+
 ## ADMIN.CONF
 
 mkdir -p ~/.kube
@@ -901,6 +915,20 @@ spec:
   - to: [...]
     ports: [...]
 ```
+
+DNS and kube-system
+```yaml
+- to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+```
+
 
 ### Critical parameters of a NetworkPolicy
 
