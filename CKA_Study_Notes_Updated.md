@@ -99,6 +99,36 @@ spec:
     matchLabels:
       app: db
 ```
+## Pod Security Admission (PSA)
+Security requirement	Example
+No privileged containers	privileged: false
+No hostNetwork	hostNetwork: false
+No hostPID	hostPID: false
+No hostPath volumes	Avoid host filesystem access
+Run as non-root	runAsNonRoot: true
+Drop Linux capabilities	capabilities.drop: ["ALL"]
+No privilege escalation	allowPrivilegeEscalation: false
+Use seccomp	seccompProfile.type: RuntimeDefault
+
+3. Example: Pod that violates restricted
+This Pod will be rejected:
+apiVersion: v1
+kind: Pod
+metadata:
+  name: insecure-pod
+  namespace: backend
+spec:
+  containers:
+    - name: nginx
+      image: nginx
+      securityContext:
+        privileged: true
+
+
+Expected error:
+Error from server (Forbidden):
+violates PodSecurity "restricted"
+
 
 ## ADMIN.CONF
 
