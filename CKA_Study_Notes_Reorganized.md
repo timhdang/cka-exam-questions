@@ -1631,3 +1631,28 @@ Test configuration:
 ```bash
 nginx -t
 ```
+
+## 6.5 Mischellaneous
+
+# 6.5.1 Remove a label
+```bash
+kubectl label pod <pod-name> <label-key>-
+kubectl label node <node-name> <label-key>-
+```
+
+# 6.5.2 
+create a service
+```bash
+kubectl create service clusterip svc-ip --tcp=80:8080
+```
+
+It creates a ClusterIP Service named svc-ip.
+Understand --tcp=80:8080
+--tcp=<service-port>:<target-port>
+
+Parameter	Value	Meaning
+Service name	svc-ip	Service name
+Type	ClusterIP	Internal cluster access
+Protocol	TCP	TCP protocol
+Port	80	Service port
+TargetPort	8080	Backend container port
