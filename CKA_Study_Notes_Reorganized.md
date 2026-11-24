@@ -473,6 +473,8 @@ systemctl status containerd
 ## 1.12 - REST 
 
 Fetching Kubernetes Secrets via REST API
+[Accessing the Kubernetes API from a Pod](https://kubernetes.io/docs/tasks/run-application/access-api-from-pod/)
+
 
 Option 1: Using kubectl proxy (Easiest Locally)
 
