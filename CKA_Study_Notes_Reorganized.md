@@ -1212,6 +1212,18 @@ spec:
   - to: [...]
     ports: [...]
 ```
+## Important 
+to:
+- namespaceSelector: ...
+- podSelector: ...
+
+===> OR logic
+
+to:
+- namespaceSelector: ...
+  podSelector: ...
+
+===> AND logic
 
 DNS and kube-system (egress rule to allow DNS):
 
