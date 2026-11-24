@@ -470,6 +470,36 @@ systemctl status containerd
 
 ---
 
+## 1.12 - REST 
+
+Fetching Kubernetes Secrets via REST API
+
+Option 1: Using kubectl proxy (Easiest Locally)
+
+kubectl proxy runs a local HTTP server that forwards requests to the API server and attaches your kubeconfig credentials and TLS verification automatically:
+
+kubectl proxy --port=8080 &
+curl -s http://localhost:8080/api/v1/namespaces/default/secrets/my-secret
+
+
+Option 2: Direct HTTPS Request with a Bearer Token
+
+From inside a Pod, the API server is reachable at https://kubernetes.default.svc (or https://kubernetes.default), with the ServiceAccount token and CA certificate mounted under /var/run/secrets/kubernetes.io/serviceaccount/:
+
+APISERVER="https://kubernetes.default.svc"
+CACERT="/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+
+curl -s \
+  --cacert "$CACERT" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Accept: application/json" \
+  "$APISERVER/api/v1/namespaces/default/secrets/my-secret"
+
+
+From outside the cluster, replace $APISERVER with your API server URL and supply a valid Bearer token or client certificate along with the cluster's CA bundle.
+
+
 # Part 2 — Workloads & Scheduling (15%)
 
 ## 2.1 Workload types
