@@ -193,6 +193,18 @@ kubectl get nodes                          # VERSION column shows the new versio
 
 > 💡 **Tip:** `kubectl get nodes` shows the *kubelet* version. After `kubeadm upgrade apply` the node still shows the old version until the kubelet package is upgraded and restarted.
 
+Correct commands
+On the control-plane node:
+```sudo kubeadm upgrade apply v1.37.x```
+
+
+On the worker node:
+```sudo kubeadm upgrade node``` 
+
+WRONG
+```sudo kubeadm upgrade apply v1.37.x```
+
+
 ## 1.3 kubeconfig, contexts and admin.conf
 
 ### Context
