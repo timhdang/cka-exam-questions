@@ -1649,6 +1649,14 @@ printenv
 - `net-tools`
 - `tmux`
 
+### How to run a sh script
+```bash
+sh /script.sh
+#or
+chmod +x /script.sh
+/script.sh```
+
+
 ## 6.4 Nginx basic config
 
 ```nginx
@@ -1675,6 +1683,18 @@ Test configuration:
 ```bash
 nginx -t
 ```
+
+## OPENSSL
+1. Local Certificate File (.pem, .crt, .cer)
+Show only the expiration date:
+
+Bash
+openssl x509 -in cert.pem -noout -enddate
+Show both start (notBefore) and expiration (notAfter) dates:
+
+Bash
+openssl x509 -in cert.pem -noout -dates
+
 
 ## 6.5 Mischellaneous
 
