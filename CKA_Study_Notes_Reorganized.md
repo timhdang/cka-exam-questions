@@ -1159,7 +1159,7 @@ spec:
 The `secretName` refers to a [TLS Secret](#tls-secret).
 
 ## 3.5 Gateway API
-
+## 3.5.1 Gateway API
 Know the relationship:
 
 - `GatewayClass`: defines the gateway implementation.
@@ -1186,6 +1186,63 @@ spec:
     backendRefs:
     - name: web-service
       port: 80
+```
+## 3.5.2 HTTP Route
+```yaml
+# Kubernetes Gateway API: `HTTPRoute` Matches & Filters Notes
+
+## Overview
+- **`matches`**: Determine *which* incoming HTTP requests select a given rule.
+- **`filters`**: Determine *how* matched requests or responses are modified, redirected, mirrored, or processed.
+
+---
+
+## `matches` (Request Selection)
+
+### Evaluation Logic
+- **Within a single match entry (`AND`)**: All specified conditions (`path`, `headers`, `queryParams`, `method`) must match together.
+- **Across multiple match entries (`OR`)**: If any entry in `matches[]` evaluates to true, the rule is selected.
+- **Default**: Omitting `matches` defaults to `PathPrefix: /` (matches all requests).
+
+### Match Fields
+- **`path`**
+  - `PathPrefix`: Segment-aware prefix match (e.g., `/v2` matches `/v2` and `/v2/users`, not `/v20`).
+  - `Exact`: Exact full path match.
+  - `RegularExpression`: Regex path match (extended/implementation-dependent).
+- **`headers`**: Match request header names and values (`Exact` or `RegularExpression`).
+- **`queryParams`**: Match URL query parameter keys and values (`Exact` or `RegularExpression`).
+- **`method`**: Match specific HTTP methods (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`, etc.).
+
+### Precedence
+- Only **one** rule matches a request.
+- Specific matches win over general ones: `Exact` path > `PathPrefix` > longer prefix > more header/query/method criteria.
+
+### Example: Combined `AND` / `OR` Matchers
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: orders-route
+spec:
+  parentRefs:
+    - name: public-gateway
+  rules:
+    # Rule 1: Matches if (GET /v2/orders AND X-Channel: mobile) OR (Exact /v2/orders/health)
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /v2/orders
+          method: GET
+          headers:
+            - type: Exact
+              name: X-Channel
+              value: mobile
+        - path:
+            type: Exact
+            value: /v2/orders/health
+      backendRefs:
+        - name: orders-service
+          port: 8080
 ```
 
 ## 3.6 Network Policy
