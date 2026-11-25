@@ -1222,6 +1222,8 @@ spec:
 - Specific matches win over general ones: `Exact` path > `PathPrefix` > longer prefix > more header/query/method criteria.
 
 ### Example: Combined `AND` / `OR` Matchers
+## OR
+
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
@@ -1247,6 +1249,22 @@ spec:
       backendRefs:
         - name: orders-service
           port: 8080
+```
+## AND
+```yaml
+matches:
+  - path:
+      type: PathPrefix
+      value: /v2/orders
+    method: GET
+    headers:
+      - type: Exact
+        name: X-Channel
+        value: mobile
+
+  - path:
+      type: Exact
+      value: /v2/orders/health
 ```
 
 ## 3.6 Network Policy
