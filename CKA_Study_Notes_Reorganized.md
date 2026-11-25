@@ -653,6 +653,10 @@ resources:
 - `Burstable`: at least one request/limit is set, but not all meet Guaranteed criteria.
 - `BestEffort`: no CPU or memory requests/limits are set.
 
+```bash
+kubectl get pods -o custom-columns="NAMESPACE:.metadata.namespace,NAME:.metadata.name,QOS:.status.qosClass"
+```
+
 ## 2.5 Autoscaling (HPA)
 
 ```bash
