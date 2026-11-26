@@ -1,6 +1,15 @@
 # CKA Study Notes
 
-> **Legend:** 💡 = new tip added in this edition · ⚠️ = common trap or correction. All original content is kept; anything that was wrong, inconsistent or duplicated was fixed or merged.
+### Useful URL 
+https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/ 
+https://kubernetes.io/docs/reference/kubectl/generated/kubectl_annotate/
+https://kubernetes.io/docs/tasks/extend-kubernetes/http-proxy-access-api/
+https://kubernetes.io/docs/tutorials/configuration/configure-persistent-volume-storage/
+https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/
+https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/
+https://gateway-api.sigs.k8s.io/guides/user-guides/http-routing/
+https://kubernetes.io/docs/reference/kubectl/
+https://kubernetes.io/docs/reference/kubectl/jsonpath/
 
 ## Contents
 
