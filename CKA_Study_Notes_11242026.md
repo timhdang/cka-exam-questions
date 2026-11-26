@@ -465,6 +465,7 @@ kubectl create rolebinding admin --clusterrole=admin --user=user1 --user=user2 -
 kubectl create rolebinding admin-binding --role=admin --serviceaccount=monitoring:sa-dev
 ```
 
+
 ### ClusterRole / ClusterRoleBinding
 
 ```bash
@@ -850,6 +851,36 @@ curl -s \
   "$APISERVER/api/v1/namespaces/default/secrets/my-secret"
 ```
 
+NOTE: 
+When sa is mount to a POD
+Kubernetes automatically mounts these files inside the container:
+/var/run/secrets/kubernetes.io/serviceaccount/
+├── token
+├── ca.crt
+└── namespace
+
+
+Therefore, this command works immediately:
+TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+
+
+No manual token generation is necessary.
+
+When do you need to generate a token explicitly?
+When you want a token outside the Pod or need to manually obtain one.
+
+For example:
+```bash
+kubectl create token my-sa
+```
+
+This generates a short-lived ServiceAccount token.
+
+You can also disable automatic mounting:
+```yaml
+spec:
+  automountServiceAccountToken: false
+```
 From outside the cluster, replace `$APISERVER` with your API server URL and supply a valid Bearer token or client certificate along with the cluster's CA bundle.
 
 > 💡 **Tips**
